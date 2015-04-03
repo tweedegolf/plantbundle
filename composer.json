@@ -1,0 +1,22 @@
+{
+    "name": "tweedegolf/plantbundle",
+    "homepage": "https://github.com/tweedegolf/plantbundle",
+    "description": "Bundle to work with the YGA plant database in different projects",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Hugo van de Pol",
+            "email": "hugo@tweedegolf.nl"
+        }
+    ],
+    "require": {
+        "symfony/symfony": "~2.6",
+        "friendsofsymfony/elastica-bundle": "dev-master"
+
+    },
+    "autoload": {
+        "psr-4": {
+            "TweedeGolf\\PlantBundle\\": "src/TweedeGolf/PlantBundle/"
+        }
+    }
+}

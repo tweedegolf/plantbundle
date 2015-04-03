@@ -1,0 +1,20 @@
+services:
+    tweedegolf_plant.finder:
+        class: TweedeGolf\PlantBundle\Search\PlantFinder
+        arguments:
+            - @tweedegolf_plant.plant_transformer
+            - %tweedegolf_plant.elastica_host%
+            - %tweedegolf_plant.elastica_port%
+
+    tweedegolf_plant.plant_transformer:
+        class: TweedeGolf\PlantBundle\Search\PlantTransformer
+
+    tweedegolf_plant.plant_retriever:
+        class: TweedeGolf\PlantBundle\Retriever\PlantRetriever
+        arguments:
+            - @doctrine.dbal.dbtool_connection
+
+    tweedegolf_plant.property_retriever:
+        class: TweedeGolf\PlantBundle\Retriever\PropertyRetriever
+        arguments:
+            - @doctrine.dbal.dbtool_connection

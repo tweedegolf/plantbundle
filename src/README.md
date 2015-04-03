@@ -1,8 +1,9 @@
 # TweedeGolfPlantBundle
-Bundle to work with the YGA plant database in different projects.
+Bundle to work with tweede golf's YGA plant database in different projects.
 
 ## Installation
-Using [Composer][composer] add the bundle to your requirements:
+Using [Compose][composer] add the bundle by running `composer require tweedegolf/plantbundle:dev-master` or
+add the bundle to your requirements and run `composer install`:
 
  ```json
  {
@@ -12,7 +13,7 @@ Using [Composer][composer] add the bundle to your requirements:
  }
  ```
 ## Configuration
-Set the elastica_host and elastica_port parameters:
+Set the bundle's elastica_host and elastica_port parameters:
 
 ```
 tweede_golf_plant:
@@ -20,13 +21,25 @@ tweede_golf_plant:
     elastica_port: 9200
 ```
 
-Set the following parameters for the plant database to their correct values in your parameters.yml
+Set the following parameters for the tweede golf plant database to their correct values in your parameters.yml
 
 ```
-    dbtool_driver
-    dbtool_host
-    dbtool_name
-    dbtool_user
+    tweedegolf_plant_driver
+    tweedegolf_plant_host
+    tweedegolf_plant_name
+    tweedegolf_plant_user
+    tweedegolf_plant_password
+```
+
+And add a dbal connection for Doctrine using these parameters:
+```
+            dbtool:
+                driver:   %tweedegolf_plant_driver%
+                host:     %tweedegolf_plant_host%
+                dbname:   %tweedegolf_plant_name%
+                user:     %tweedegolf_plant_user%
+                password: %tweedegolf_plant_password%
+                charset:  UTF8
 ```
 
 ## Usage

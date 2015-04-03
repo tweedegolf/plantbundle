@@ -1,7 +1,7 @@
 {
     "name": "tweedegolf/plantbundle",
     "homepage": "https://github.com/tweedegolf/plantbundle",
-    "description": "Bundle to work with the YGA plant database in different projects",
+    "description": "Bundle to work with tweede golf's YGA plant database in different projects.",
     "license": "MIT",
     "authors": [
         {

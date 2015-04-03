@@ -8,10 +8,19 @@ use \Elastica\Query;
 use FOS\ElasticaBundle\Paginator\TransformedPaginatorAdapter;
 
 /**
- * Finds elastica documents and map them to persisted objects.
+ * Custom finder to search the plant database. It provides a search method and a
+ * findPaginated mathod
+ *
+ * Class PlantFinder
+ * @package TweedeGolf\PlantBundle\Search
  */
 class PlantFinder
 {
+    /**
+     * @param PlantTransformer $transformer
+     * @param $host
+     * @param $port
+     */
     public function __construct(PlantTransformer $transformer, $host, $port)
     {
         $this->client = new Client(['host' => $host, 'port' => $port]);
@@ -20,6 +29,10 @@ class PlantFinder
         $this->searchable = $this->client->getIndex('plant');
     }
 
+    /**
+     * @param $q
+     * @return mixed
+     */
     public function search($q)
     {
         $this->search->addIndex('plant');
@@ -32,8 +45,6 @@ class PlantFinder
     }
 
     /**
-     * Method used in PlantRetriever
-     *
      * @param $query
      * @param $offset
      * @param $limit

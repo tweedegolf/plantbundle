@@ -14,7 +14,9 @@ use Doctrine\DBAL\Connection;
  */
 class PlantRetriever
 {
-    /* The DBAL database connection */
+    /**
+     * @var Connection
+     */
     protected $connection;
 
     /**
@@ -107,45 +109,8 @@ class PlantRetriever
     }
 
     /**
-     * Return the total count of plants in the database
-     */
-    public function getLimitedPlants($limit = 100, $offset = 0)
-    {
-        $sql = "
-            SELECT *
-            FROM public.plant plant
-            LIMIT ? OFFSET ?;
-        ";
-
-        $query = $this->connection->prepare($sql);
-        $query->bindValue(1, $limit);
-        $query->bindValue(2, $offset);        
-        $query->execute();
-        $plants = $query->fetchAll();
-
-        $results = [];
-        foreach ($plants as $plant) {
-
-            $sql = "
-                SELECT *
-                FROM public.plant plant, public.property prop
-                WHERE plant.id=?
-                  AND prop.plant_id=plant.id;
-            ";
-
-            $query = $this->connection->prepare($sql);
-            $query->bindValue(1, $plant['id']);
-            $query->execute();
-
-            $results[] = $query->fetchAll();
-        }
-
-        return $results;
-    }
-
-    /**
      * Protected function that converts a list of properties from the database 
-     * into a plantproxy
+     * into a PlantP    roxy
      */
     protected function propertiesToProxy($id, $properties, $locale = 'en')
     {

@@ -12,9 +12,9 @@ services:
     tweedegolf_plant.plant_retriever:
         class: TweedeGolf\PlantBundle\Retriever\PlantRetriever
         arguments:
-            - @doctrine.dbal.dbtool_connection
+            - @doctrine.dbal.tweedegolf_plant_connection
 
     tweedegolf_plant.property_retriever:
         class: TweedeGolf\PlantBundle\Retriever\PropertyRetriever
         arguments:
-            - @doctrine.dbal.dbtool_connection
+            - @doctrine.dbal.tweedegolf_plant_connection

@@ -7,27 +7,22 @@ use DateTime;
 use UnexpectedValueException;
 
 /**
- * PlantProxy
+ * Represents a plant from tweedegolf's plant database. The PlantRetriever's methods always return PlantProxy objects
  *
- * This class is a simpler reflection of the plant entity, containing a copy of all the properties in a way
- * that is easier to use in controllers and templates. 
+ * Class PlantProxy
+ * @package TweedeGolf\PlantBundle\Retriever
  */
 class PlantProxy {
 
     /**
-     * @var
+     * @var string
      */
     private $id;
 
     /**
-     * @var array Array with key values pairs "property name": "property value" (array)
+     * @var array Array with key values pairs "property name" => "property value"
      */
     private $values = [];
-
-    /**
-     * Holds the old or new source
-     */
-    private $source;
 
     /**
      * @var DateTime
@@ -40,7 +35,7 @@ class PlantProxy {
     private $updatedAt;
 
     /**
-     * All possible valid types
+     * All possible valid value types
      */
     private $valid_types = [
         'radio',
@@ -60,16 +55,6 @@ class PlantProxy {
         $this->id = $id;
         $this->values['names']['values'] = [];
         $this->values['names']['type'] = 'lines';
-    }
-
-    public function setSource($source)
-    {
-        $this->source = $source;
-    }
-    
-    public function getSource()
-    {
-        return $this->source;
     }
 
     /**
@@ -134,7 +119,8 @@ class PlantProxy {
     }
 
     /**
-     * Helper hat resturns property values as string (often there is only one value)
+     * Helper hat returns property values as string (often there is only one value)
+     *
      * @param $property
      * @return string
      */
@@ -240,46 +226,6 @@ class PlantProxy {
     public function __set($property, $value)
     {
         $this->values[$property]['values'] = array_values($value);
-    }
-
-    /**
-     * Return current choices for in form for a property with multiple values
-     *
-     * @param $property
-     * @return array
-     */
-    public function getCurrentChoices($property)
-    {
-        if (!$this->has($property)){
-            return [];
-        }
-
-        $values = $this->get($property);
-
-        $data = [];
-
-        foreach($values as $v) {
-            $data[$v] = $v;
-        }
-
-        return $data;
-    }
-
-    /**
-     * Return current choice for in form for a property with single value
-     *
-     * @param $property
-     * @return array
-     */
-    public function getCurrentChoice($property)
-    {
-        if (!$this->has($property)){
-            return '';
-        }
-
-        $values = $this->get($property);
-
-        return $values[0];
     }
 
     /**

@@ -9,10 +9,10 @@ use \Elastica\Client;
 use \Elastica\Document;
 
 /**
- * ElasticaCommand
- * 
- * Use this command to update the elastica index with all plants from the database
- * The elastica index is used for the plant suggestions
+ * Command for updating the tweedegolf 'plant' search index
+ *
+ * Class ElasticaCommand
+ * @package TweedeGolf\PlantBundle\Command
  */
 class ElasticaCommand extends ContainerAwareCommand
 {

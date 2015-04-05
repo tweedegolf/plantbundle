@@ -27,6 +27,5 @@ class TweedeGolfPlantExtension extends Extension
 
         $container->setParameter('tweedegolf_plant.elastica_host', $config['elastica_host']);
         $container->setParameter('tweedegolf_plant.elastica_port', $config['elastica_port']);
-
     }
 }

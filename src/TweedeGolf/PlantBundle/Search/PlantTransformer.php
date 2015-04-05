@@ -7,7 +7,7 @@ use FOS\ElasticaBundle\Transformer\ElasticaToModelTransformerInterface;
 
 /**
  * Custom transformer needed for the findPaginated call in the PlantFinder
- * 
+ *
  * Class PlantTransformer
  * @package Tjt\MainBundle\Retriever
  */

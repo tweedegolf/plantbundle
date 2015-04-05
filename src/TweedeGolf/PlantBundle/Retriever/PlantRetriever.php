@@ -3,6 +3,7 @@
 namespace TweedeGolf\PlantBundle\Retriever;
 
 use Doctrine\DBAL\Connection;
+use TweedeGolf\PlantBundle\Search\PlantFinder;
 
 /**
  * The PlantRetriever
@@ -20,11 +21,17 @@ class PlantRetriever
     protected $connection;
 
     /**
+     * @var PlantFinder
+     */
+    protected $finder;
+
+    /**
      * Constructor
      */ 
-    public function __construct(Connection $connection)
+    public function __construct(Connection $connection, PlantFinder $finder)
     {
         $this->connection = $connection;
+        $this->finder = $finder;
     }
 
     /**

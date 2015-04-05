@@ -119,6 +119,25 @@ class PlantProxy {
     }
 
     /**
+     * @param $property
+     * @return null
+     */
+    public function getFirst($property)
+    {
+        if (array_key_exists($property, $this->values)) {
+            $values = $this->values[$property]['values'];
+
+            if (isset($values[0])) {
+                return $values[0];
+            } else {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Helper hat returns property values as string (often there is only one value)
      *
      * @param $property
@@ -297,6 +316,21 @@ class PlantProxy {
     {
         if (isset($this->values['names']) && count($this->values['names']['values']) > 0) {
             return $this->values['names']['values'][0];
+        }
+
+        return '';
+    }
+
+
+    /**
+     * Get the first name. Returns empty string if no names are set
+     *
+     * @return string
+     */
+    public function getCommonName()
+    {
+        if (isset($this->values['commonNames']) && count($this->values['commonNames']['values']) > 0) {
+            return $this->values['commonNames']['values'][0];
         }
 
         return '';

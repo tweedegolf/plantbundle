@@ -33,7 +33,7 @@ class PlantFinder
      * @param $q
      * @return mixed
      */
-    public function search($q)
+    public function search($q = '', $options = null)
     {
         $this->search->addIndex('plant');
         $this->search->addType('plant');
@@ -41,7 +41,7 @@ class PlantFinder
         $query = new Query($q);
         $this->search->setQuery($query);
 
-        return $this->search->search();
+        return $this->search->search($q, $options);
     }
 
     /**

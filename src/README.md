@@ -33,7 +33,7 @@ Set the following parameters for the tweede golf plant database to their correct
 
 And add a dbal connection for Doctrine using these parameters:
 ```
-            dbtool:
+            tweedegolf_plant:
                 driver:   %tweedegolf_plant_driver%
                 host:     %tweedegolf_plant_host%
                 dbname:   %tweedegolf_plant_name%

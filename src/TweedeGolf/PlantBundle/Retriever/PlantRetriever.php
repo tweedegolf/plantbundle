@@ -143,22 +143,7 @@ class PlantRetriever
 
         return $results;
     }
-
-    /**
-     * Return the total count of plants in the database
-     */
-    public function getPlantCount()
-    {
-        $sql = "
-                SELECT count(*)
-                FROM public.plant plant;
-        ";
-        $query = $this->connection->executeQuery($sql);
-        $count = $query->fetchAll()[0]['count'];
-
-        return $count;
-    }
-
+    
     /**
      * Protected function that converts a list of properties from the database 
      * into a PlantP    roxy

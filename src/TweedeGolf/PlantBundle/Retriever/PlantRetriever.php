@@ -63,6 +63,50 @@ class PlantRetriever
     }
 
     /**
+     * Return the total count of plants in the database
+     */
+    public function getPlantCount()
+    {
+        $sql = "
+                SELECT count(*)
+                FROM public.plant plant;
+        ";
+        $query = $this->connection->executeQuery($sql);
+        $count = $query->fetchAll()[0]['count'];
+        return $count;
+    }
+    /**
+     * Return the total count of plants in the database, needed for the ElasticaCommmand
+     */
+    public function getLimitedPlants($limit = 100, $offset = 0)
+    {
+        $sql = "
+            SELECT *
+            FROM public.plant plant
+            LIMIT ? OFFSET ?;
+        ";
+        $query = $this->connection->prepare($sql);
+        $query->bindValue(1, $limit);
+        $query->bindValue(2, $offset);
+        $query->execute();
+        $plants = $query->fetchAll();
+        $results = [];
+        foreach ($plants as $plant) {
+            $sql = "
+                SELECT *
+                FROM public.plant plant, public.property prop
+                WHERE plant.id=?
+                  AND prop.plant_id=plant.id;
+            ";
+            $query = $this->connection->prepare($sql);
+            $query->bindValue(1, $plant['id']);
+            $query->execute();
+            $results[] = $query->fetchAll();
+        }
+        return $results;
+    }
+
+    /**
      * Find an array of plants with the given array of ids 
      * and an optional locale. Returns either [] or an array of PlantProxy
      */

@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
  * Class PropertyRetriever
  * @package TweedeGolf\PlantBundle\Retriever
  */
-class PropertyRetriever
+class PropertyRetriever extends AbstractRetriever
 {
     /**
      * @var Connection
@@ -26,20 +26,24 @@ class PropertyRetriever
 
     /**
      * @param $name
+     * @param $locale
      * @return array|null
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function getPropertyByName($name)
+    public function getPropertyByName($name, $locale = null)
     {
-        // dirty casting to text but works
+        $locale = $locale !== null ? $locale : $this->locale;
+
         $sql = "
             SELECT DISTINCT p.values::text
             FROM public.property p
             WHERE p.name = ?
+            AND p.locale = ?
         ";
 
         $query = $this->connection->prepare($sql);
         $query->bindParam(1, $name);
+        $query->bindParam(2, $locale);
         $query->execute();
 
         $result = $query->fetchAll();

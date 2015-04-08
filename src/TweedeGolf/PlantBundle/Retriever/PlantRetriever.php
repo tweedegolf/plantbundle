@@ -3,6 +3,7 @@
 namespace TweedeGolf\PlantBundle\Retriever;
 
 use Doctrine\DBAL\Connection;
+use Symfony\Component\HttpFoundation\RequestStack;
 use TweedeGolf\PlantBundle\Search\PlantFinder;
 
 /**
@@ -13,7 +14,7 @@ use TweedeGolf\PlantBundle\Search\PlantFinder;
  * 
  * Note: this class returns plantproxies
  */
-class PlantRetriever
+class PlantRetriever extends AbstractRetriever
 {
     /**
      * @var Connection
@@ -35,20 +36,24 @@ class PlantRetriever
     }
 
     /**
-     * Find one plant by the given id and an optional locale
+     * Find one plant by the given id and an optional locale that overrides $this->locale
      * Returns either null or a PlantProxy
      */
-    public function getPlantById($id, $locale = 'en')
+    public function getPlantById($id, $locale = null)
     {
+        $locale = $locale !== null ? $locale : $this->locale;
+
         $sql = "
             SELECT *
             FROM public.plant plant, public.property prop
             WHERE plant.id=?
-              AND prop.plant_id=plant.id;
+              AND prop.plant_id=plant.id
+              AND prop.locale =?
         ";
 
         $query = $this->connection->prepare($sql);
         $query->bindValue(1, $id);
+        $query->bindValue(2, $locale);
         $query->execute();
 
         $properties = $query->fetchAll();
@@ -73,13 +78,16 @@ class PlantRetriever
         ";
         $query = $this->connection->executeQuery($sql);
         $count = $query->fetchAll()[0]['count'];
+
         return $count;
     }
     /**
      * Return the total count of plants in the database, needed for the ElasticaCommmand
      */
-    public function getLimitedPlants($limit = 100, $offset = 0)
+    public function getLimitedPlants($limit = 100, $offset = 0, $locale = null)
     {
+        $locale = $locale !== null ? $locale : $this->locale;
+
         $sql = "
             SELECT *
             FROM public.plant plant
@@ -96,10 +104,13 @@ class PlantRetriever
                 SELECT *
                 FROM public.plant plant, public.property prop
                 WHERE plant.id=?
-                  AND prop.plant_id=plant.id;
+                  AND prop.plant_id=plant.id
+                  AND prop.locale =?
+                  ;
             ";
             $query = $this->connection->prepare($sql);
             $query->bindValue(1, $plant['id']);
+            $query->bindValue(2, $locale);
             $query->execute();
             $results[] = $query->fetchAll();
         }
@@ -110,19 +121,21 @@ class PlantRetriever
      * Find an array of plants with the given array of ids 
      * and an optional locale. Returns either [] or an array of PlantProxy
      */
-    public function getPlantsById($ids, $locale = 'en')
+    public function getPlantsById($ids, $locale = null)
     {
+        $locale = $locale !== null ? $locale : $this->locale;
+
         $sql = "
             SELECT *
             FROM public.plant plant, public.property prop
             WHERE plant.id IN (?)
               AND prop.plant_id=plant.id
-              AND prop.locale='en';
+              AND prop.locale=?;
         ";
 
         $query = $this->connection->executeQuery(
             $sql,
-            array($ids),
+            array($ids, $locale),
             array(\Doctrine\DBAL\Connection::PARAM_INT_ARRAY)
         );
 
@@ -146,10 +159,12 @@ class PlantRetriever
     
     /**
      * Protected function that converts a list of properties from the database 
-     * into a PlantP    roxy
+     * into a PlantProxy
      */
-    protected function propertiesToProxy($id, $properties, $locale = 'en')
+    protected function propertiesToProxy($id, $properties, $locale = null)
     {
+        $locale = $locale !== null ? $locale : $this->locale;
+
         $proxy = new PlantProxy($id);
 
         foreach ($properties as $property) {

@@ -64,6 +64,7 @@ class ElasticaCommand extends ContainerAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $retriever = $this->getContainer()->get('tweedegolf_plant.plant_retriever');
+        $retriever->setLocale('en');
         $progress = $this->getHelperSet()->get('progress');
 
         $port = $this->getContainer()->getParameter('tweedegolf_plant.elastica_port');
@@ -87,6 +88,9 @@ class ElasticaCommand extends ContainerAwareCommand
                 $id = $properties[0]['plant_id'];
                 $document['id'] = $id;               
                 $document['name'] = unserialize($properties[0]['names']);
+
+                //todo: set correct locale
+                $document['locale'] = 'en';
 
                 // set properties that have a value based only on their own 'values' key only
                 foreach ($properties as $prop) {                   

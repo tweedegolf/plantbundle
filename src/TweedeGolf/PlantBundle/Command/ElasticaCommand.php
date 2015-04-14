@@ -92,7 +92,7 @@ class ElasticaCommand extends ContainerAwareCommand
                     $document = [];
                     $id = $properties[0]['plant_id'];
                     $document['id'] = $id;
-                    $document['name'] = unserialize($properties[0]['names']);
+                    $document['name'] = json_decode($properties[0]['names']);
                     $document['locale'] = $locale;
 
                     // set properties that have a value based only on their own 'values' key only

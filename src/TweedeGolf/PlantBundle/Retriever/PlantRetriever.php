@@ -81,6 +81,7 @@ class PlantRetriever extends AbstractRetriever
 
         return $count;
     }
+    
     /**
      * Return the total count of plants in the database, needed for the ElasticaCommmand
      */
@@ -182,7 +183,7 @@ class PlantRetriever extends AbstractRetriever
         $props = $properties[0];
         $proxy->setCreatedAt($props['createdat']);
         $proxy->setUpdatedAt($props['updatedat']);
-        $proxy->set('names', unserialize($props['names']), true, 'lines');
+        $proxy->set('names', json_decode($props['names']), true, 'lines');
 
         return $proxy;
     }

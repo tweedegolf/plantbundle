@@ -88,28 +88,32 @@ class ElasticaCommand extends ContainerAwareCommand
 
                 foreach ($plants as $properties) {
 
-                    /* Fill a dummy entity with names, use */
-                    $document = [];
-                    $id = $properties[0]['plant_id'];
-                    $document['id'] = $id;
-                    $document['name'] = unserialize($properties[0]['names']);
-                    $document['locale'] = $locale;
+                    if (count($properties) > 0) {
 
-                    // set properties that have a value based only on their own 'values' key only
-                    foreach ($properties as $prop) {
-                        if (!in_array($prop['name'], $this->derivedProperties)) {
-                            $document[$prop['name']] = json_decode($prop['values']);
+                        /* Fill a dummy entity with names, use */
+                        $document = [];
+                        $id = $properties[0]['plant_id'];
+                        $document['id'] = $id;
+                        $document['name'] = json_decode($properties[0]['names']);
+                        $document['locale'] = $locale;
+
+                        // set properties that have a value based only on their own 'values' key only
+                        foreach ($properties as $prop) {
+                            if (!in_array($prop['name'], $this->derivedProperties)) {
+                                $document[$prop['name']] = json_decode($prop['values']);
+                            }
                         }
+
+                        // set derived properties
+                        $document['edible'] = $this->getEdibility($properties);
+                        $document['sustainable'] = $this->getSustainable($properties);
+
+                        $doc = new Document($id, $document);
+                        $type->addDocument($doc);
+                        $type->getIndex()->refresh();
+                        $progress->advance();
+
                     }
-
-                    // set derived properties
-                    $document['edible'] = $this->getEdibility($properties);
-                    $document['sustainable'] = $this->getSustainable($properties);
-
-                    $doc = new Document($id, $document);
-                    $type->addDocument($doc);
-                    $type->getIndex()->refresh();
-                    $progress->advance();
                 }
             }
         }

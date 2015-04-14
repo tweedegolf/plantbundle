@@ -5,6 +5,9 @@ namespace TweedeGolf\PlantBundle\Search;
 use \Elastica\Client;
 use \Elastica\Search;
 use \Elastica\Query;
+use \Elastica\Query\Match;
+use \Elastica\Query\Bool;
+
 use FOS\ElasticaBundle\Paginator\TransformedPaginatorAdapter;
 
 /**
@@ -31,26 +34,43 @@ class PlantFinder
 
     /**
      * @param $q
+     * @param $locale is verplicht
      * @return mixed
      */
-    public function search($q = '', $options = null)
+    public function search(
+        $q /* Geen lege queries */,
+        $locale /* Geen default! */,
+        $options = null
+    )
     {
         $this->search->addIndex('plant');
         $this->search->addType('plant');
 
-        $query = new Query($q);
-        $this->search->setQuery($query);
+        /* Locale */
+        $locale_check = new Match();
+        $locale_check -> setField("locale", $locale);
+
+        /* The received query */
+        $query = new Query($q);        
+
+        /* Tie both queries together */
+        $bool = new Bool();
+        $bool ->addShould($q);
+        $bool ->addShould($locale_check);
+
+        $this->search->setQuery($bool);
 
         return $this->search->search($q, $options);
     }
 
     /**
      * @param $query
+     * @param $locale
      * @param $offset
      * @param $limit
      * @return \FOS\ElasticaBundle\Paginator\PartialResultsInterface|\FOS\ElasticaBundle\Paginator\TransformedPartialResults
      */
-    public function findPaginated($query, $offset, $limit)
+    public function findPaginated($query, $locale, $offset, $limit)
     {
         $queryObject = Query::create($query);
         $paginatorAdapter = $this->createPaginatorAdapter($queryObject, []);

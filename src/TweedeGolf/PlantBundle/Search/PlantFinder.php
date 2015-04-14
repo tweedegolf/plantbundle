@@ -31,15 +31,31 @@ class PlantFinder
 
     /**
      * @param $q
+     * @param $locale is verplicht
      * @return mixed
      */
-    public function search($q = '', $options = null)
+    public function search(
+        $q /* Geen lege queries */,
+        $locale /* Geen default! */,
+        $options = null
+    )
     {
         $this->search->addIndex('plant');
         $this->search->addType('plant');
 
-        $query = new Query($q);
-        $this->search->setQuery($query);
+        /* Locale */
+        $locale_check = new Elastica_Query_Text();
+        $locale_check -> setField("locale", $locale);
+
+        /* The received query */
+        $query = new Query($q);        
+
+        /* Tie both queries together */
+        $bool = new Elastica_Query_Bool();
+        $bool ->addShould($q);
+        $bool ->addShould($locale_check);
+
+        $this->search->setQuery($bool);
 
         return $this->search->search($q, $options);
     }

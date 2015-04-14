@@ -5,8 +5,8 @@ namespace TweedeGolf\PlantBundle\Search;
 use \Elastica\Client;
 use \Elastica\Search;
 use \Elastica\Query;
-use \Elastica\Elastica_Query_Text
-use \Elastica\Elastica_Query_Bool
+use \Elastica\Query\Match;
+use \Elastica\Query\Bool;
 
 use FOS\ElasticaBundle\Paginator\TransformedPaginatorAdapter;
 
@@ -47,14 +47,14 @@ class PlantFinder
         $this->search->addType('plant');
 
         /* Locale */
-        $locale_check = new Elastica_Query_Text();
+        $locale_check = new Match();
         $locale_check -> setField("locale", $locale);
 
         /* The received query */
         $query = new Query($q);        
 
         /* Tie both queries together */
-        $bool = new Elastica_Query_Bool();
+        $bool = new Bool();
         $bool ->addShould($q);
         $bool ->addShould($locale_check);
 
@@ -72,10 +72,10 @@ class PlantFinder
      */
     public function findPaginated($query, $locale, $offset, $limit)
     {
-        // $queryObject = Query::create($query);
-        // $paginatorAdapter = $this->createPaginatorAdapter($queryObject, []);
+        $queryObject = Query::create($query);
+        $paginatorAdapter = $this->createPaginatorAdapter($queryObject, []);
 
-        // return $paginatorAdapter->getResults($offset, $limit);
+        return $paginatorAdapter->getResults($offset, $limit);
     }
 
     /**
@@ -83,8 +83,8 @@ class PlantFinder
      */
     public function createPaginatorAdapter($query, $options = array())
     {
-        // $query = Query::create($query);
+        $query = Query::create($query);
 
-        // return new TransformedPaginatorAdapter($this->searchable, $query, $options, $this->transformer);
+        return new TransformedPaginatorAdapter($this->searchable, $query, $options, $this->transformer);
     }
 }

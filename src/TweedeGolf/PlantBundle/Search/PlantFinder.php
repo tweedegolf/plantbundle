@@ -5,6 +5,9 @@ namespace TweedeGolf\PlantBundle\Search;
 use \Elastica\Client;
 use \Elastica\Search;
 use \Elastica\Query;
+use \Elastica\Elastica_Query_Text
+use \Elastica\Elastica_Query_Bool
+
 use FOS\ElasticaBundle\Paginator\TransformedPaginatorAdapter;
 
 /**
@@ -62,16 +65,17 @@ class PlantFinder
 
     /**
      * @param $query
+     * @param $locale
      * @param $offset
      * @param $limit
      * @return \FOS\ElasticaBundle\Paginator\PartialResultsInterface|\FOS\ElasticaBundle\Paginator\TransformedPartialResults
      */
-    public function findPaginated($query, $offset, $limit)
+    public function findPaginated($query, $locale, $offset, $limit)
     {
-        $queryObject = Query::create($query);
-        $paginatorAdapter = $this->createPaginatorAdapter($queryObject, []);
+        // $queryObject = Query::create($query);
+        // $paginatorAdapter = $this->createPaginatorAdapter($queryObject, []);
 
-        return $paginatorAdapter->getResults($offset, $limit);
+        // return $paginatorAdapter->getResults($offset, $limit);
     }
 
     /**
@@ -79,8 +83,8 @@ class PlantFinder
      */
     public function createPaginatorAdapter($query, $options = array())
     {
-        $query = Query::create($query);
+        // $query = Query::create($query);
 
-        return new TransformedPaginatorAdapter($this->searchable, $query, $options, $this->transformer);
+        // return new TransformedPaginatorAdapter($this->searchable, $query, $options, $this->transformer);
     }
 }

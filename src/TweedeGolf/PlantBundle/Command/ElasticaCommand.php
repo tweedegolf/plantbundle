@@ -7,6 +7,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use \Elastica\Client;
 use \Elastica\Document;
+use TweedeGolf\PlantBundle\Retriever\PlantRetriever;
 
 /**
  * Command for updating the tweedegolf 'plant' search index
@@ -63,8 +64,8 @@ class ElasticaCommand extends ContainerAwareCommand
     /* Execute: what happens when the command is executed */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        /** @var PlantRetriever $retriever */
         $retriever = $this->getContainer()->get('tweedegolf_plant.plant_retriever');
-        $retriever->setLocale('en');
         $progress = $this->getHelperSet()->get('progress');
 
         $port = $this->getContainer()->getParameter('tweedegolf_plant.elastica_port');
@@ -78,35 +79,38 @@ class ElasticaCommand extends ContainerAwareCommand
 
         $plantCount = $retriever->getPlantCount();
         $progress->start($output, $plantCount);
-        for ($i = 0; $i < $plantCount; $i += 100) {
-            $plants = $retriever->getLimitedPlants(100, $i);
 
-            foreach ($plants as $properties) {
+        $languages = $this->getContainer()->getParameter('languages');
 
-                /* Fill a dummy entity with names, use */
-                $document = [];
-                $id = $properties[0]['plant_id'];
-                $document['id'] = $id;               
-                $document['name'] = unserialize($properties[0]['names']);
+        foreach($languages as $locale => $label) {
+            for ($i = 0; $i < $plantCount; $i += 100) {
+                $plants = $retriever->getLimitedPlants(100, $i, $locale);
 
-                //todo: set correct locale
-                $document['locale'] = 'en';
+                foreach ($plants as $properties) {
 
-                // set properties that have a value based only on their own 'values' key only
-                foreach ($properties as $prop) {                   
-                    if (!in_array($prop['name'], $this->derivedProperties)) {
-                        $document[$prop['name']] = json_decode($prop['values']);
+                    /* Fill a dummy entity with names, use */
+                    $document = [];
+                    $id = $properties[0]['plant_id'];
+                    $document['id'] = $id;
+                    $document['name'] = unserialize($properties[0]['names']);
+                    $document['locale'] = $locale;
+
+                    // set properties that have a value based only on their own 'values' key only
+                    foreach ($properties as $prop) {
+                        if (!in_array($prop['name'], $this->derivedProperties)) {
+                            $document[$prop['name']] = json_decode($prop['values']);
+                        }
                     }
+
+                    // set derived properties
+                    $document['edible'] = $this->getEdibility($properties);
+                    $document['sustainable'] = $this->getSustainable($properties);
+
+                    $doc = new Document($id, $document);
+                    $type->addDocument($doc);
+                    $type->getIndex()->refresh();
+                    $progress->advance();
                 }
-
-                // set derived properties
-                $document['edible'] = $this->getEdibility($properties);
-                $document['sustainable'] = $this->getSustainable($properties);
-
-                $doc = new Document($id, $document);
-                $type->addDocument($doc);
-                $type->getIndex()->refresh();
-                $progress->advance();            
             }
         }
 

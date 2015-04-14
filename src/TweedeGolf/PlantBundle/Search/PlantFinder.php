@@ -65,12 +65,11 @@ class PlantFinder
 
     /**
      * @param $query
-     * @param $locale
      * @param $offset
      * @param $limit
      * @return \FOS\ElasticaBundle\Paginator\PartialResultsInterface|\FOS\ElasticaBundle\Paginator\TransformedPartialResults
      */
-    public function findPaginated($query, $locale, $offset, $limit)
+    public function findPaginated($query, $offset, $limit)
     {
         $queryObject = Query::create($query);
         $paginatorAdapter = $this->createPaginatorAdapter($queryObject, []);

@@ -94,7 +94,6 @@ class ElasticaCommand extends ContainerAwareCommand
 
                         /* Fill a dummy entity with names, use */
                         $document = [];
-                        $document['plantid'] = $properties[0]['plant_id'][0];
                         $document['id'] = $j;
                         $document['name'] = json_decode($properties[0]['names']);
                         $document['locale'] = $locale;
@@ -109,6 +108,7 @@ class ElasticaCommand extends ContainerAwareCommand
                         // set derived properties
                         $document['edible'] = $this->getEdibility($properties);
                         $document['sustainable'] = $this->getSustainable($properties);
+                        $document['plantid'] = $properties[0]['plant_id'];
 
                         $doc = new Document($j, $document);
                         $type->addDocument($doc);

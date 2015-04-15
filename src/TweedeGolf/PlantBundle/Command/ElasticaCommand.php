@@ -25,8 +25,8 @@ class ElasticaCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-        ->setName('elastica:refresh')
-        ->setDescription('Refresh the index');
+            ->setName('elastica:refresh')
+            ->setDescription('Refresh the index');
     }
 
     protected function createIndex($index)
@@ -82,6 +82,7 @@ class ElasticaCommand extends ContainerAwareCommand
 
         $languages = $this->getContainer()->getParameter('languages');
 
+        $j = 0;
         foreach($languages as $locale => $label) {
             for ($i = 0; $i < $plantCount; $i += 100) {
                 $plants = $retriever->getLimitedPlants(100, $i, $locale);
@@ -92,8 +93,8 @@ class ElasticaCommand extends ContainerAwareCommand
 
                         /* Fill a dummy entity with names, use */
                         $document = [];
-                        $id = $properties[0]['plant_id'];
-                        $document['id'] = $id;
+                        $document['plantid'] = $properties[0]['plant_id'];
+                        $document['id'] = $j;
                         $document['name'] = json_decode($properties[0]['names']);
                         $document['locale'] = $locale;
 
@@ -108,11 +109,11 @@ class ElasticaCommand extends ContainerAwareCommand
                         $document['edible'] = $this->getEdibility($properties);
                         $document['sustainable'] = $this->getSustainable($properties);
 
-                        $doc = new Document($id, $document);
+                        $doc = new Document($j, $document);
                         $type->addDocument($doc);
                         $type->getIndex()->refresh();
                         $progress->advance();
-
+                        $j += 1;
                     }
                 }
             }

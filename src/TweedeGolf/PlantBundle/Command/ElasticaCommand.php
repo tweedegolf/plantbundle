@@ -74,6 +74,7 @@ class ElasticaCommand extends ContainerAwareCommand
         /* Elastica */
         $client = new Client(['host' => $host, 'port' => $port]);
         $index = $client->getIndex('plant');
+        $index->delete();
         $this->createIndex($index);
         $type = $index->getType('plant');
 

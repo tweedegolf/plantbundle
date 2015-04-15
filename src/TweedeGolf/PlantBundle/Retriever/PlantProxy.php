@@ -138,7 +138,7 @@ class PlantProxy {
     }
 
     /**
-     * Helper hat returns property values as string (often there is only one value)
+     * Helper that returns property values as string (often there is only one value)
      *
      * @param $property
      * @return string
@@ -154,6 +154,29 @@ class PlantProxy {
             foreach($values as $v) {
                 $result .= ($i > 0 ? ' ' . $v : $v);
                 $i += 1;
+            }
+
+            return $result;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Helper that returns first property value as string
+     *
+     * @param $property
+     * @return string
+     */
+    public function getFirstAsString($property)
+    {
+        $result = '';
+
+        if (array_key_exists($property, $this->values)) {
+            $values = $this->values[$property]['values'];
+
+            if (isset($values[0])) {
+                return $values[0];
             }
 
             return $result;

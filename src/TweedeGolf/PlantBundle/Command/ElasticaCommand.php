@@ -94,7 +94,7 @@ class ElasticaCommand extends ContainerAwareCommand
 
                         /* Fill a dummy entity with names, use */
                         $document = [];
-                        $document['plantid'] = $properties[0]['plant_id'];
+                        $document['plantid'] = $properties[0]['plant_id'][0];
                         $document['id'] = $j;
                         $document['name'] = json_decode($properties[0]['names']);
                         $document['locale'] = $locale;

@@ -55,6 +55,8 @@ class PlantProxy {
         $this->id = $id;
         $this->values['names']['values'] = [];
         $this->values['names']['type'] = 'lines';
+        $this->values['images']['values'] = [];
+        $this->values['images']['type'] = 'images';
     }
 
     /**
@@ -233,9 +235,10 @@ class PlantProxy {
      */
     public function resetValues()
     {
-        $this->values = [];
         $this->values['names']['values'] = [];
         $this->values['names']['type'] = 'lines';
+        $this->values['images']['values'] = [];
+        $this->values['images']['type'] = 'images';
     }
 
     /**

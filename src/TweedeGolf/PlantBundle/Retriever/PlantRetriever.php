@@ -184,6 +184,7 @@ class PlantRetriever extends AbstractRetriever
         $proxy->setCreatedAt($props['createdat']);
         $proxy->setUpdatedAt($props['updatedat']);
         $proxy->set('names', json_decode($props['names']), true, 'lines');
+        $proxy->set('images', unserialize($props['images']), true, 'images');
 
         return $proxy;
     }

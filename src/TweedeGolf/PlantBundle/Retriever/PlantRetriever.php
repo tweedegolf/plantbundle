@@ -173,7 +173,7 @@ class PlantRetriever extends AbstractRetriever
                 $proxy->set(
                     $property['name'],
                     json_decode($property['values']),
-                    true,
+                    false,
                     $property['type']
                 );
             }

@@ -78,18 +78,20 @@ class ElasticaCommand extends ContainerAwareCommand
         $this->createIndex($index);
         $type = $index->getType('plant');
 
-        $plantCount = $retriever->getPlantCount();
-        $progress->start($output, $plantCount);
-
         $languages = $this->getContainer()->getParameter('languages');
 
         $j = 0;
         foreach($languages as $locale => $label) {
+
+            $plantCount = $retriever->getPlantCount($locale);
+            $output->writeln('Count: '.$plantCount);
+            $output->writeln('Indexing: '.$label);
+            $progress->start($output, $plantCount);
+
             for ($i = 0; $i < $plantCount; $i += 100) {
                 $plants = $retriever->getLimitedPlants(100, $i, $locale);
 
                 foreach ($plants as $properties) {
-
                     if (count($properties) > 0) {
 
                         /* Fill a dummy entity with names, use */
@@ -101,14 +103,14 @@ class ElasticaCommand extends ContainerAwareCommand
                         // set properties that have a value based only on their own 'values' key only
                         foreach ($properties as $prop) {
                             if (!in_array($prop['name'], $this->derivedProperties)) {
-                                $document[$prop['name']] = json_decode($prop['values']);
+                                $document[$prop['name']][] = json_decode($prop['values']);
                             }
                         }
 
                         // set derived properties
+                        $document['plantid'] = $properties[0]['plant_id'];
                         $document['edible'] = $this->getEdibility($properties);
                         $document['sustainable'] = $this->getSustainable($properties);
-                        $document['plantid'] = $properties[0]['plant_id'];
 
                         $doc = new Document($j, $document);
                         $type->addDocument($doc);
@@ -118,9 +120,8 @@ class ElasticaCommand extends ContainerAwareCommand
                     }
                 }
             }
+            $progress->finish();
         }
-
-        $progress->finish();
     }
 
     /**

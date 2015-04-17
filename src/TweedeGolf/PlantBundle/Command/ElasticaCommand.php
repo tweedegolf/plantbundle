@@ -34,25 +34,24 @@ class ElasticaCommand extends ContainerAwareCommand
         // Create the index new
         $index->create(
             array(
-                'number_of_shards' => 4,
-                'number_of_replicas' => 1,
                 'analysis' => array(
                     'analyzer' => array(
                         'indexAnalyzer' => array(
                             'type' => 'custom',
-                            'tokenizer' => 'standard',
-                            'filter' => array('lowercase', 'mySnowball')
+                            'tokenizer' => 'plant_ngram',
+                            'filter' => array('standard', 'lowercase')
                         ),
                         'searchAnalyzer' => array(
                             'type' => 'custom',
-                            'tokenizer' => 'standard',
-                            'filter' => array('standard', 'lowercase', 'mySnowball')
+                            'tokenizer' => 'plant_ngram',
+                            'filter' => array('standard', 'lowercase')
                         )
                     ),
-                    'filter' => array(
-                        'mySnowball' => array(
-                            'type' => 'snowball',
-                            'language' => 'Dutch'
+                    'tokenizer' => array(
+                        'plant_ngram' => array(
+                            'type' => 'nGram',
+                            'min_gram' => '2',
+                            'max_gram' => '3'
                         )
                     )
                 )
@@ -74,9 +73,18 @@ class ElasticaCommand extends ContainerAwareCommand
         /* Elastica */
         $client = new Client(['host' => $host, 'port' => $port]);
         $index = $client->getIndex('plant');
-        $index->delete();
+
+        if ($index) {
+            $index->delete();
+        }
+
         $this->createIndex($index);
         $type = $index->getType('plant');
+
+        $mapping = $this->getMapping();
+
+        // explicitly set mapping do define analyzer
+        $type->setMapping($mapping);
 
         $languages = $this->getContainer()->getParameter('languages');
 
@@ -91,7 +99,10 @@ class ElasticaCommand extends ContainerAwareCommand
             for ($i = 0; $i < $plantCount; $i += 100) {
                 $plants = $retriever->getLimitedPlants(100, $i, $locale);
 
-                foreach ($plants as $properties) {
+                foreach ($plants as $info) {
+                    $properties = $info['properties'];
+                    $plant = $info['plant'];
+
                     if (count($properties) > 0) {
 
                         /* Fill a dummy entity with names, use */
@@ -112,16 +123,55 @@ class ElasticaCommand extends ContainerAwareCommand
                         $document[$this->getEdibleProperty($locale)] = $this->getEdibility($properties, $locale);
                         $document[$this->getSustainableProperty($locale)] = $this->getSustainable($properties, $locale);
 
-                        $doc = new Document($j, $document);
-                        $type->addDocument($doc);
-                        $type->getIndex()->refresh();
-                        $progress->advance();
-                        $j += 1;
+                    } else {
+                        /* Fill a dummy entity with names, use */
+                        $document = [];
+                        $document['plantid'] = $plant['id'];
+                        $document['id'] = $j;
+                        $document['name'] = json_decode($plant['names']);
+                        $document['locale'] = $locale;
+                        $document['images'] = unserialize($plant['images']);
                     }
+
+                    $doc = new Document($j, $document);
+                    $type->addDocument($doc);
+                    $type->getIndex()->refresh();
+                    $progress->advance();
+                    $j += 1;
+
                 }
             }
             $progress->finish();
         }
+    }
+
+    /**
+     * Construct mapping for the text searchable properties that explicity sets
+     * the analyzer that is to be used
+     *
+     * @return array
+     */
+    private function getMapping()
+    {
+        $props = [
+            'use',
+            'names',
+            'common_name',
+            'flower',
+            'flowering_season',
+            'type_of_plant',
+        ];
+
+        $propertyTranslations = $this->getContainer()->getParameter('plant_properties');
+
+        $mapping = [];
+
+        foreach($props as $name) {
+            foreach($propertyTranslations[$name] as $locale => $prop)
+            $mapping[$prop] = ['type' => 'string', 'analyzer' => 'searchAnalyzer'];
+        }
+
+        return $mapping;
     }
 
     private function getEdibleProperty($locale)
@@ -158,32 +208,23 @@ class ElasticaCommand extends ContainerAwareCommand
      */
     private function getEdibility($properties, $locale)
     {
-        switch($locale) {
-            case 'nl':
-                if (!isset($properties['vrucht'])) {
-                    return false;
+        foreach($properties as $property) {
+            if(in_array($property['name'], ['vrucht', 'fruit', 'frucht'])) {
+                $property['values'] = json_decode($property['values']);
+                switch($locale) {
+                    case 'nl':
+                        return in_array('eetbaar', $property['values']) || in_array('aparte smaak', $property['values']);
+                    case 'fr':
+                        return in_array('comestible', $property['values']);
+                    case 'de':
+                        return in_array('essbar', $property['values']);
+                    default:
+                        return in_array('edible', $property['values']) || in_array('unusual taste', $property['values']);
                 }
-
-                return in_array('eetbaar', $properties['vrucht']) || in_array('aparte smaak', $properties['vrucht']);
-            case 'fr':
-                if (!isset($properties['fruit'])) {
-                    return false;
-                }
-
-                return in_array('comestible', $properties['fruit']);
-            case 'de':
-                if (!isset($properties['frucht'])) {
-                    return false;
-                }
-
-                return in_array('essbar', $properties['frucht']);
-            default:
-                if (!isset($properties['fruit'])) {
-                    return false;
-                }
-
-                return in_array('edible', $properties['fruit']) || in_array('unusual taste', $properties['fruit']);
+            }
         }
+
+        return false;
     }
 
     /**
@@ -194,15 +235,22 @@ class ElasticaCommand extends ContainerAwareCommand
      */
     private function getSustainable($properties, $locale)
     {
-        switch($locale) {
-            case 'nl':
-                return isset($properties['gebruik']) && (in_array('waardplant voor vlinders', $properties['gebruik']) || in_array('bijenplant', $properties['gebruik']));
-            case 'fr':
-                return isset($properties['utilisation']) && (in_array('hôte pour les papillons', $properties['utilisation']));
-            case 'de':
-                return isset($properties['verwendung']) && (in_array('Wirtpflanze für Schmetterlinge', $properties['verwendung']) || in_array('Bienenpflanze', $properties['verwendung']));
-            default:
-                return isset($properties['use']) && (in_array('butterfly host plant', $properties['use']) || in_array('bee plant', $properties['use']));
+        foreach($properties as $property) {
+            if(in_array($property['name'], ['gebruik', 'utilisation', 'verwendung', 'use'])) {
+                $property['values'] = json_decode($property['values']);
+                switch($locale) {
+                    case 'nl':
+                        return in_array('waardplant voor vlinders', $property['values']) || in_array('bijenplant', $property['values']);
+                    case 'fr':
+                        return in_array('hôte pour les papillons', $property['values']);
+                    case 'de':
+                        return in_array('Wirtpflanze für Schmetterlinge', $property['values']) || in_array('Bienenpflanze', $property['values']);
+                    default:
+                        return in_array('butterfly host plant', $property['values']) || in_array('bee plant', $property['values']);
+                }
+            }
         }
+
+        return false;
     }
 }

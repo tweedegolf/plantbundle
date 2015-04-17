@@ -113,7 +113,7 @@ class PlantRetriever extends AbstractRetriever
             $query->bindValue(1, $plant['id']);
             $query->bindValue(2, $locale);
             $query->execute();
-            $results[] = $query->fetchAll();
+            $results[] = ['properties' => $query->fetchAll(), 'plant' => $plant];
         }
         return $results;
     }

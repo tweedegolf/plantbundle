@@ -109,8 +109,8 @@ class ElasticaCommand extends ContainerAwareCommand
 
                         // set derived properties
                         $document['plantid'] = $properties[0]['plant_id'];
-                        $document['edible'] = $this->getEdibility($properties);
-                        $document['sustainable'] = $this->getSustainable($properties);
+                        $document[$this->getEdibleProperty($locale)] = $this->getEdibility($properties, $locale);
+                        $document[$this->getSustainableProperty($locale)] = $this->getSustainable($properties, $locale);
 
                         $doc = new Document($j, $document);
                         $type->addDocument($doc);
@@ -124,33 +124,85 @@ class ElasticaCommand extends ContainerAwareCommand
         }
     }
 
-    /**
-     * @param $properties
-     * @return bool
-     */
-    private function getEdibility($properties)
+    private function getEdibleProperty($locale)
     {
-        if (!isset($properties['fruit'])) {
-            return false;
+        if ($locale === 'nl') {
+            return 'eetbaar';
+        } elseif ($locale === 'de') {
+            return 'essbar';
+        } elseif ($locale === 'fr') {
+            return 'comestible';
+        } else {
+            return 'edible';
         }
+    }
 
-        $values = $properties['fruit'];
-
-        return in_array('edible', $values) || in_array('unusual taste', $values);
+    private function getSustainableProperty($locale)
+    {
+        if ($locale === 'nl') {
+            return 'duurzaam';
+        } elseif ($locale === 'de') {
+            return 'nachhaltiger';
+        } elseif ($locale === 'fr') {
+            return 'durable';
+        } else {
+            return 'sustainable';
+        }
     }
 
     /**
+     * Check the 'edible' property for each locale
+     *
      * @param $properties
      * @return bool
      */
-    private function getSustainable($properties)
+    private function getEdibility($properties, $locale)
     {
-        if (!isset($properties['use'])) {
-            return false;
+        switch($locale) {
+            case 'nl':
+                if (!isset($properties['vrucht'])) {
+                    return false;
+                }
+
+                return in_array('eetbaar', $properties['vrucht']) || in_array('aparte smaak', $properties['vrucht']);
+            case 'fr':
+                if (!isset($properties['fruit'])) {
+                    return false;
+                }
+
+                return in_array('comestible', $properties['fruit']);
+            case 'de':
+                if (!isset($properties['frucht'])) {
+                    return false;
+                }
+
+                return in_array('essbar', $properties['frucht']);
+            default:
+                if (!isset($properties['fruit'])) {
+                    return false;
+                }
+
+                return in_array('edible', $properties['fruit']) || in_array('unusual taste', $properties['fruit']);
         }
+    }
 
-        $use = $properties['use'];
-
-        return in_array('butterfly host plant', $use) || in_array('bee plant', $use);
+    /**
+     * Check how sustainable the plant is for all languages, rather arbitrary definition...
+     *
+     * @param $properties
+     * @return bool
+     */
+    private function getSustainable($properties, $locale)
+    {
+        switch($locale) {
+            case 'nl':
+                return isset($properties['gebruik']) && (in_array('waardplant voor vlinders', $properties['gebruik']) || in_array('bijenplant', $properties['gebruik']));
+            case 'fr':
+                return isset($properties['utilisation']) && (in_array('hôte pour les papillons', $properties['utilisation']));
+            case 'de':
+                return isset($properties['verwendung']) && (in_array('Wirtpflanze für Schmetterlinge', $properties['verwendung']) || in_array('Bienenpflanze', $properties['verwendung']));
+            default:
+                return isset($properties['use']) && (in_array('butterfly host plant', $properties['use']) || in_array('bee plant', $properties['use']));
+        }
     }
 }

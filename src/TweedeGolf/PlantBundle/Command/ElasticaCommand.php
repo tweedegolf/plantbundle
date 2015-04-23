@@ -109,6 +109,7 @@ class ElasticaCommand extends ContainerAwareCommand
                         $document = [];
                         $document['id'] = $j;
                         $document['name'] = json_decode($properties[0]['names']);
+                        $document['identifier'] = $this->getUniqueIdentifier($properties[0]['names']);
                         $document['locale'] = $locale;
 
                         // set properties that have a value based only on their own 'values' key only
@@ -252,5 +253,16 @@ class ElasticaCommand extends ContainerAwareCommand
         }
 
         return false;
+    }
+
+    /**
+     * Get a unique identifier based on the Latin names of the plant
+     *
+     * @param $names
+     * @return string
+     */
+    private function getUniqueIdentifier($names)
+    {
+        return substr(base64_encode(hash('sha256', $names)), 0, 10);
     }
 }

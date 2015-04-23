@@ -68,6 +68,38 @@ class PlantRetriever extends AbstractRetriever
     }
 
     /**
+     * Find one plant by the given identifier (hash) and an optional locale that overrides $this->locale
+     * Returns either null or a PlantProxy
+     */
+    public function getPlantByIdentifier($identifier, $locale = null)
+    {
+        $locale = $locale !== null ? $locale : $this->locale;
+
+        $sql = "
+            SELECT *
+            FROM public.plant plant, public.property prop
+            WHERE plant.identifier=?
+              AND prop.plant_id=plant.id
+              AND prop.locale =?
+        ";
+
+        $query = $this->connection->prepare($sql);
+        $query->bindValue(1, $identifier);
+        $query->bindValue(2, $locale);
+        $query->execute();
+
+        $properties = $query->fetchAll();
+        if (count($properties) < 1) {
+            return null;
+        }
+
+        /* Transform to Proxy */
+        $proxy = $this->propertiesToProxy($identifier, $properties, $locale, $identifier);
+
+        return $proxy;
+    }
+
+    /**
      * Return the total count of plants in the database
      */
     public function getPlantCount()
@@ -162,7 +194,7 @@ class PlantRetriever extends AbstractRetriever
      * Protected function that converts a list of properties from the database 
      * into a PlantProxy
      */
-    protected function propertiesToProxy($id, $properties, $locale = null)
+    protected function propertiesToProxy($id, $properties, $locale = null, $identifier = null)
     {
         $locale = $locale !== null ? $locale : $this->locale;
 
@@ -185,6 +217,7 @@ class PlantRetriever extends AbstractRetriever
         $proxy->setUpdatedAt($props['updatedat']);
         $proxy->set('names', json_decode($props['names']), true, 'lines');
         $proxy->set('images', unserialize($props['images']), true, 'images');
+        $proxy->set('identifier', $identifier);
 
         return $proxy;
     }

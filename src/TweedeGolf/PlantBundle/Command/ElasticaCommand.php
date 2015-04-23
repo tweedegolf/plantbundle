@@ -2,6 +2,7 @@
 
 namespace TweedeGolf\PlantBundle\Command;
 
+use Elastica\Index;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -29,35 +30,24 @@ class ElasticaCommand extends ContainerAwareCommand
             ->setDescription('Refresh the index');
     }
 
-    protected function createIndex($index)
+    protected function createIndex(Index $index)
     {
         // Create the index new
-        $index->create(
-            array(
-                'analysis' => array(
-                    'analyzer' => array(
-                        'indexAnalyzer' => array(
-                            'type' => 'custom',
-                            'tokenizer' => 'plant_ngram',
-                            'filter' => array('standard', 'lowercase')
-                        ),
-                        'searchAnalyzer' => array(
-                            'type' => 'custom',
-                            'tokenizer' => 'plant_ngram',
-                            'filter' => array('standard', 'lowercase')
-                        )
-                    ),
-                    'tokenizer' => array(
-                        'plant_ngram' => array(
-                            'type' => 'nGram',
-                            'min_gram' => '2',
-                            'max_gram' => '3'
-                        )
-                    )
-                )
-            ),
-            true
-        );
+        $index->create([
+            'analysis' => [
+                'analyzer' => [
+                    'plant_analyzer' => [
+                        'type' => 'custom',
+                        'tokenizer' => 'plant_ngram',
+                    ]
+                ],
+                'tokenizer' => [
+                    'plant_ngram' => [
+                        'type' => 'nGram',
+                    ]
+                ]
+            ]
+        ], true);
     }
 
     /* Execute: what happens when the command is executed */
@@ -74,7 +64,7 @@ class ElasticaCommand extends ContainerAwareCommand
         $client = new Client(['host' => $host, 'port' => $port]);
         $index = $client->getIndex('plant');
 
-        if ($index) {
+        if ($index->exists()) {
             $index->delete();
         }
 
@@ -103,14 +93,18 @@ class ElasticaCommand extends ContainerAwareCommand
                     $properties = $info['properties'];
                     $plant = $info['plant'];
 
+                    /* Fill a dummy entity with names, use */
+                    $document = [];
+                    $document['plantid'] = $plant['id'];
+                    $document['id'] = $j;
+                    $document['names'] = json_decode($plant['names']);
+                    $document['locale'] = $locale;
+                    $document['images'] = count(unserialize($plant['images']));
+                    if ($document['images'] === 0) {
+                        unset($document['images']);
+                    }
+
                     if (count($properties) > 0) {
-
-                        /* Fill a dummy entity with names, use */
-                        $document = [];
-                        $document['id'] = $j;
-                        $document['name'] = json_decode($properties[0]['names']);
-                        $document['locale'] = $locale;
-
                         // set properties that have a value based only on their own 'values' key only
                         foreach ($properties as $prop) {
                             if (!in_array($prop['name'], $this->derivedProperties)) {
@@ -122,15 +116,6 @@ class ElasticaCommand extends ContainerAwareCommand
                         $document['plantid'] = $properties[0]['plant_id'];
                         $document[$this->getEdibleProperty($locale)] = $this->getEdibility($properties, $locale);
                         $document[$this->getSustainableProperty($locale)] = $this->getSustainable($properties, $locale);
-
-                    } else {
-                        /* Fill a dummy entity with names, use */
-                        $document = [];
-                        $document['plantid'] = $plant['id'];
-                        $document['id'] = $j;
-                        $document['name'] = json_decode($plant['names']);
-                        $document['locale'] = $locale;
-                        $document['images'] = unserialize($plant['images']);
                     }
 
                     $doc = new Document($j, $document);
@@ -168,8 +153,10 @@ class ElasticaCommand extends ContainerAwareCommand
 
         foreach($props as $name) {
             foreach($propertyTranslations[$name] as $locale => $prop)
-            $mapping[$prop] = ['type' => 'string', 'analyzer' => 'searchAnalyzer'];
+            $mapping[$prop] = ['type' => 'string', 'analyzer' => 'plant_analyzer'];
         }
+
+        $mapping['locale'] = ['type' => 'string', 'index' => 'not_analyzed'];
 
         return $mapping;
     }

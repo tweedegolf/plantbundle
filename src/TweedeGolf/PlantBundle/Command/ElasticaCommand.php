@@ -40,7 +40,7 @@ class ElasticaCommand extends ContainerAwareCommand
                         'type' => 'custom',
                         'tokenizer' => 'plant_ngram',
                         'filter' => ['lowercase'],
-                    ]
+                    ],
                 ],
                 'tokenizer' => [
                     'plant_ngram' => [
@@ -115,6 +115,15 @@ class ElasticaCommand extends ContainerAwareCommand
                                 if (is_array($data) && count($data) === 1) {
                                     $data = $data[0];
                                 }
+
+                                if (!isset($document[$prop['name']])) {
+                                    $document[$prop['name']] = [];
+                                }
+
+                                if (!is_array($document[$prop['name']])) {
+                                    continue;
+                                }
+
                                 $document[$prop['name']][] = $data;
                             }
                         }
@@ -130,7 +139,6 @@ class ElasticaCommand extends ContainerAwareCommand
                     $type->getIndex()->refresh();
                     $progress->advance();
                     $j += 1;
-
                 }
             }
             $progress->finish();
@@ -154,7 +162,7 @@ class ElasticaCommand extends ContainerAwareCommand
         };
 
         $analyzedMapping = ['type' => 'string', 'analyzer' => 'plant_analyzer'];
-        $termMapping = ['type' => 'string', 'index' => 'not_analyzed'];
+        $termMapping = ['type' => 'string', 'analyzer' => 'simple'];
 
         $mapping['names'] = $analyzedMapping;
         $set('use', $analyzedMapping);

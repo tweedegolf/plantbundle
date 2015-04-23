@@ -3,8 +3,7 @@
 namespace TweedeGolf\PlantBundle\Retriever;
 
 use Doctrine\DBAL\Connection;
-use Symfony\Component\HttpFoundation\RequestStack;
-use TweedeGolf\PlantBundle\Search\PlantFinder;
+use Symfony\Component\Translation\TranslatorInterface;
 
 /**
  * The PlantRetriever
@@ -14,7 +13,7 @@ use TweedeGolf\PlantBundle\Search\PlantFinder;
  * 
  * Note: this class returns plantproxies
  */
-class PlantRetriever extends AbstractRetriever
+class PlantRetriever
 {
     /**
      * @var Connection
@@ -22,33 +21,33 @@ class PlantRetriever extends AbstractRetriever
     protected $connection;
 
     /**
-     * @var PlantFinder
+     * @var TranslatorInterface
      */
-    protected $finder;
+    protected $translator;
 
     /**
      * Constructor
      */ 
-    public function __construct(Connection $connection, PlantFinder $finder)
+    public function __construct(Connection $connection, TranslatorInterface $translator)
     {
         $this->connection = $connection;
-        $this->finder = $finder;
+        $this->translator = $translator;
     }
 
     /**
-     * Find one plant by the given id and an optional locale that overrides $this->locale
+     * Find one plant by the given id and an optional locale that overrides $locale
      * Returns either null or a PlantProxy
      */
     public function getPlantById($id, $locale = null)
     {
-        $locale = $locale !== null ? $locale : $this->locale;
+        $locale = $locale !== null ? $locale : $this->translator->getLocale();
 
         $sql = "
             SELECT *
             FROM public.plant plant, public.property prop
-            WHERE plant.id=?
+            WHERE plant.id = ?
               AND prop.plant_id=plant.id
-              AND prop.locale =?
+              AND prop.locale = ?
         ";
 
         $query = $this->connection->prepare($sql);
@@ -87,7 +86,7 @@ class PlantRetriever extends AbstractRetriever
      */
     public function getLimitedPlants($limit = 100, $offset = 0, $locale = null)
     {
-        $locale = $locale !== null ? $locale : $this->locale;
+        $locale = $locale !== null ? $locale : $this->translator->getLocale();
 
         $sql = "
             SELECT *
@@ -104,9 +103,9 @@ class PlantRetriever extends AbstractRetriever
             $sql = "
                 SELECT *
                 FROM public.plant plant, public.property prop
-                WHERE plant.id=?
+                WHERE plant.id = ?
                   AND prop.plant_id=plant.id
-                  AND prop.locale =?
+                  AND prop.locale = ?
                   ;
             ";
             $query = $this->connection->prepare($sql);
@@ -122,16 +121,16 @@ class PlantRetriever extends AbstractRetriever
      * Find an array of plants with the given array of ids 
      * and an optional locale. Returns either [] or an array of PlantProxy
      */
-    public function getPlantsById($ids, $locale = null)
+    public function getPlantsById(array $ids, $locale = null)
     {
-        $locale = $locale !== null ? $locale : $this->locale;
+        $locale = $locale !== null ? $locale : $this->translator->getLocale();
 
         $sql = "
             SELECT *
             FROM public.plant plant, public.property prop
             WHERE plant.id IN (?)
-              AND prop.plant_id=plant.id
-              AND prop.locale=?;
+              AND prop.plant_id = plant.id
+              AND prop.locale = ?;
         ";
 
         $query = $this->connection->executeQuery(
@@ -155,6 +154,16 @@ class PlantRetriever extends AbstractRetriever
             $results[] = $this->propertiesToProxy($id, $properties, $locale);
         }
 
+        usort($results, function ($a, $b) use ($ids) {
+            $idx_a = array_search($a->getId(), $ids);
+            $idx_b = array_search($b->getId(), $ids);
+            if ($idx_a === $idx_b) {
+                return 0;
+            }
+
+            return ($idx_a < $idx_b) ? -1 : 1;
+        });
+
         return $results;
     }
     
@@ -164,7 +173,7 @@ class PlantRetriever extends AbstractRetriever
      */
     protected function propertiesToProxy($id, $properties, $locale = null)
     {
-        $locale = $locale !== null ? $locale : $this->locale;
+        $locale = $locale !== null ? $locale : $this->translator->getLocale();
 
         $proxy = new PlantProxy($id);
 

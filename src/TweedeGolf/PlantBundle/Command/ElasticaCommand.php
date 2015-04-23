@@ -39,6 +39,7 @@ class ElasticaCommand extends ContainerAwareCommand
                     'plant_analyzer' => [
                         'type' => 'custom',
                         'tokenizer' => 'plant_ngram',
+                        'filter' => ['lowercase'],
                     ]
                 ],
                 'tokenizer' => [
@@ -76,7 +77,7 @@ class ElasticaCommand extends ContainerAwareCommand
         // explicitly set mapping do define analyzer
         $type->setMapping($mapping);
 
-        $languages = $this->getContainer()->getParameter('languages');
+        $languages = ['nl' => 'Dutch']; // $this->getContainer()->getParameter('languages');
 
         $j = 0;
         foreach($languages as $locale => $label) {
@@ -108,7 +109,11 @@ class ElasticaCommand extends ContainerAwareCommand
                         // set properties that have a value based only on their own 'values' key only
                         foreach ($properties as $prop) {
                             if (!in_array($prop['name'], $this->derivedProperties)) {
-                                $document[$prop['name']][] = json_decode($prop['values']);
+                                $data = json_decode($prop['values']);
+                                if (is_array($data) && count($data) === 1) {
+                                    $data = $data[0];
+                                }
+                                $document[$prop['name']][] = $data;
                             }
                         }
 
@@ -138,25 +143,24 @@ class ElasticaCommand extends ContainerAwareCommand
      */
     private function getMapping()
     {
-        $props = [
-            'use',
-            'names',
-            'common_name',
-            'flower',
-            'flowering_season',
-            'type_of_plant',
-        ];
-
-        $propertyTranslations = $this->getContainer()->getParameter('plant_properties');
-
         $mapping = [];
+        $propertyTranslations = $this->getContainer()->getParameter('plant_properties');
+        $set = function ($property, $settings) use ($propertyTranslations, &$mapping) {
+            foreach ($propertyTranslations[$property] as $locale => $prop) {
+                $mapping[$prop] = $settings;
+            }
+        };
 
-        foreach($props as $name) {
-            foreach($propertyTranslations[$name] as $locale => $prop)
-            $mapping[$prop] = ['type' => 'string', 'analyzer' => 'plant_analyzer'];
-        }
+        $analyzedMapping = ['type' => 'string', 'analyzer' => 'plant_analyzer'];
+        $termMapping = ['type' => 'string', 'index' => 'not_analyzed'];
 
-        $mapping['locale'] = ['type' => 'string', 'index' => 'not_analyzed'];
+        $mapping['names'] = $analyzedMapping;
+        $set('use', $analyzedMapping);
+        $set('common_name', $analyzedMapping);
+        $set('flower', $termMapping);
+        $set('flowering_season', $termMapping);
+        $set('type_of_plant', $termMapping);
+        $mapping['locale'] = $termMapping;
 
         return $mapping;
     }

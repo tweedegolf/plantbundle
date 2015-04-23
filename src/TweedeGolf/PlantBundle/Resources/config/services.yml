@@ -13,9 +13,7 @@ services:
         class: TweedeGolf\PlantBundle\Retriever\PlantRetriever
         arguments:
             - @doctrine.dbal.tweedegolf_plant_connection
-            - @tweedegolf_plant.finder
-        calls:
-            - [setLocale, [@request_stack]]
+            - @translator
 
     tweedegolf_plant.property_retriever:
         class: TweedeGolf\PlantBundle\Retriever\PropertyRetriever

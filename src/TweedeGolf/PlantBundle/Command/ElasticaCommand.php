@@ -101,6 +101,8 @@ class ElasticaCommand extends ContainerAwareCommand
                     $document['names'] = json_decode($plant['names']);
                     $document['locale'] = $locale;
                     $document['images'] = count(unserialize($plant['images']));
+                    $document['identifier'] = $plant['identifier'];
+                    
                     if ($document['images'] === 0) {
                         unset($document['images']);
                     }

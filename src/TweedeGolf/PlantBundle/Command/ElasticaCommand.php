@@ -30,28 +30,9 @@ class ElasticaCommand extends ContainerAwareCommand
             ->setDescription('Refresh the index');
     }
 
-    protected function createIndex(Index $index)
-    {
-        // Create the index new
-        $index->create([
-            'analysis' => [
-                'analyzer' => [
-                    'plant_analyzer' => [
-                        'type' => 'custom',
-                        'tokenizer' => 'plant_ngram',
-                        'filter' => ['lowercase'],
-                    ],
-                ],
-                'tokenizer' => [
-                    'plant_ngram' => [
-                        'type' => 'nGram',
-                    ]
-                ]
-            ]
-        ], true);
-    }
-
-    /* Execute: what happens when the command is executed */
+    /**
+     * {@inheritdoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         /** @var PlantRetriever $retriever */
@@ -77,7 +58,7 @@ class ElasticaCommand extends ContainerAwareCommand
         // explicitly set mapping do define analyzer
         $type->setMapping($mapping);
 
-        $languages = $this->getContainer()->getParameter('languages');
+        $languages = ['nl' => 'Dutch']; // $this->getContainer()->getParameter('languages');
 
         $j = 0;
         foreach($languages as $locale => $label) {
@@ -146,6 +127,33 @@ class ElasticaCommand extends ContainerAwareCommand
     }
 
     /**
+     * Create the plant index with a set of parameters.
+     * @param Index $index
+     */
+    protected function createIndex(Index $index)
+    {
+        // Create the index new
+        $index->create([
+            'analysis' => [
+                'analyzer' => [
+                    'plant_analyzer' => [
+                        'type' => 'custom',
+                        'tokenizer' => 'plant_ngram',
+                        'filter' => ['lowercase'],
+                    ],
+                ],
+                'tokenizer' => [
+                    'plant_ngram' => [
+                        'type' => 'nGram',
+                        'min_gram' => 2,
+                        'max_gram' => 3,
+                    ]
+                ]
+            ]
+        ], true);
+    }
+
+    /**
      * Construct mapping for the text searchable properties that explicity sets
      * the analyzer that is to be used
      *
@@ -162,7 +170,7 @@ class ElasticaCommand extends ContainerAwareCommand
         };
 
         $analyzedMapping = ['type' => 'string', 'analyzer' => 'plant_analyzer'];
-        $termMapping = ['type' => 'string', 'analyzer' => 'simple'];
+        $termMapping = ['type' => 'string', 'index' => 'not_analyzed'];
 
         $mapping['names'] = $analyzedMapping;
         $set('use', $analyzedMapping);

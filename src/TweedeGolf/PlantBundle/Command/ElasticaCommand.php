@@ -58,7 +58,7 @@ class ElasticaCommand extends ContainerAwareCommand
         // explicitly set mapping do define analyzer
         $type->setMapping($mapping);
 
-        $languages = ['nl' => 'Dutch']; // $this->getContainer()->getParameter('languages');
+        $languages = $this->getContainer()->getParameter('languages');
 
         $j = 0;
         foreach($languages as $locale => $label) {

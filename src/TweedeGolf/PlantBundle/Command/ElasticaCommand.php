@@ -59,6 +59,7 @@ class ElasticaCommand extends ContainerAwareCommand
         $type->setMapping($mapping);
 
         $languages = $this->getContainer()->getParameter('languages');
+        $languages = ['nl' => 'Dutch'];
 
         $j = 0;
         foreach($languages as $locale => $label) {
@@ -81,11 +82,10 @@ class ElasticaCommand extends ContainerAwareCommand
                     $document['id'] = $j;
                     $document['names'] = json_decode($plant['names']);
                     $document['locale'] = $locale;
-                    $document['images'] = count(unserialize($plant['images']));
                     $document['identifier'] = $plant['identifier'];
-                    
-                    if ($document['images'] === 0) {
-                        unset($document['images']);
+
+                    if (count(unserialize($plant['images'])) > 0) {
+                        $document['images'] = true;
                     }
 
                     if (count($properties) > 0) {

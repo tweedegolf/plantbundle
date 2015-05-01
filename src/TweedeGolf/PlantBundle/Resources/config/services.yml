@@ -5,6 +5,7 @@ services:
             - @tweedegolf_plant.plant_transformer
             - %tweedegolf_plant.elastica_host%
             - %tweedegolf_plant.elastica_port%
+            - %plant_index%
 
     tweedegolf_plant.plant_transformer:
         class: TweedeGolf\PlantBundle\Search\PlantTransformer

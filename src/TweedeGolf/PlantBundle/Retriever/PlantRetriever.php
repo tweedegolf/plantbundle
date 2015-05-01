@@ -61,7 +61,7 @@ class PlantRetriever
         }
 
         /* Transform to Proxy */
-        $proxy = $this->propertiesToProxy($id, $properties, $locale);
+        $proxy = $this->propertiesToProxy($id, $properties, $locale, $properties[0]['identifier']);
 
         return $proxy;
     }
@@ -183,7 +183,7 @@ class PlantRetriever
 
         $results = [];
         foreach ($plants as $id => $properties) {
-            $results[] = $this->propertiesToProxy($id, $properties, $locale);
+            $results[] = $this->propertiesToProxy($id, $properties, $locale, $properties[0]['identifier']);
         }
 
         usort($results, function ($a, $b) use ($ids) {
@@ -227,6 +227,7 @@ class PlantRetriever
         $proxy->set('names', json_decode($props['names']), true, 'lines');
         $proxy->set('images', unserialize($props['images']), true, 'images');
         $proxy->set('identifier', $identifier);
+        $proxy->setIdentifier($identifier);
 
         return $proxy;
     }

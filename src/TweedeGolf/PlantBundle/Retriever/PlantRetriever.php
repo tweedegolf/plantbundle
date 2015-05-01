@@ -32,6 +32,7 @@ class PlantRetriever
     {
         $this->connection = $connection;
         $this->translator = $translator;
+        $this->locale = $translator->getLocale();
     }
 
     /**

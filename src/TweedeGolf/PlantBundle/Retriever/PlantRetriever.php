@@ -57,8 +57,16 @@ class PlantRetriever
         $query->execute();
 
         $properties = $query->fetchAll();
+
+
         if (count($properties) < 1) {
-            return null;
+            $plant = $this->getEmptyPlant($id, $locale);
+            if (!$plant) {
+                return null;
+            }
+
+            return $this->emptyPlantToProxy($id, $plant['names'], $plant['images']);
+
         }
 
         /* Transform to Proxy */
@@ -158,6 +166,101 @@ class PlantRetriever
     {
         $locale = $locale !== null ? $locale : $this->translator->getLocale();
 
+        $properties = $this->getPropertiesByPlantIds($ids, $locale);
+
+        $emptyPlants = $this->getEmptyPlants($ids, $locale);
+
+
+        if (count($properties) < 1 && count($emptyPlants) < 1) {
+            return [];
+        }
+
+        // set plants with properties
+        $plants = [];
+        foreach ($properties as $p) {
+            $plants[$p['plant_id']][] = $p;
+        }
+
+        $results = [];
+        foreach ($plants as $id => $properties) {
+            $identifier = isset($properties[0]) ? $properties[0]['identifier'] : null;
+            $results[] = $this->propertiesToProxy($id, $properties, $locale, $identifier);
+        }
+
+        // add plants without properties
+        foreach($emptyPlants as $plant) {
+            $results[] = $this->emptyPlantToProxy($plant['id'], $plant['names'], $plant['images']);
+        }
+
+        usort($results, function ($a, $b) use ($ids) {
+            $idx_a = array_search($a->getId(), $ids);
+            $idx_b = array_search($b->getId(), $ids);
+            if ($idx_a === $idx_b) {
+                return 0;
+            }
+
+            return ($idx_a < $idx_b) ? -1 : 1;
+        });
+
+        return $results;
+    }
+
+    private function getEmptyPlants($ids, $locale)
+    {
+        $sql = "
+            SELECT *
+            FROM public.plant plant
+            WHERE plant.id IN (?) AND
+              NOT EXISTS (
+                SELECT * FROM
+                public.property prop
+                WHERE prop.plant_id=plant.id
+                AND prop.locale = ?
+              );
+        ";
+
+        $query = $this->connection->executeQuery(
+            $sql,
+            array($ids, $locale),
+            array(\Doctrine\DBAL\Connection::PARAM_INT_ARRAY)
+        );
+
+        $plants = $query->fetchAll();
+
+        return $plants;
+    }
+
+    private function getEmptyPlant($id, $locale)
+    {
+        $sql = "
+            SELECT *
+            FROM public.plant plant
+            WHERE plant.id = ? AND
+              NOT EXISTS (
+                SELECT * FROM
+                public.property prop
+                WHERE prop.plant_id=plant.id
+                AND prop.locale = ?
+              );
+        ";
+
+        $query = $this->connection->executeQuery(
+            $sql,
+            array($id, $locale)
+        );
+
+        $plants = $query->fetchAll();
+
+        if (count($plants) < 0) {
+            return null;
+        }
+
+        return $plants[0];
+    }
+
+
+    private function getPropertiesByPlantIds($ids, $locale)
+    {
         $sql = "
             SELECT *
             FROM public.plant plant, public.property prop
@@ -173,31 +276,8 @@ class PlantRetriever
         );
 
         $properties = $query->fetchAll();
-        if (count($properties) < 1) {
-            return [];
-        }
 
-        $plants = [];
-        foreach ($properties as $p) {
-            $plants[$p['plant_id']][] = $p;
-        }
-
-        $results = [];
-        foreach ($plants as $id => $properties) {
-            $results[] = $this->propertiesToProxy($id, $properties, $locale, $properties[0]['identifier']);
-        }
-
-        usort($results, function ($a, $b) use ($ids) {
-            $idx_a = array_search($a->getId(), $ids);
-            $idx_b = array_search($b->getId(), $ids);
-            if ($idx_a === $idx_b) {
-                return 0;
-            }
-
-            return ($idx_a < $idx_b) ? -1 : 1;
-        });
-
-        return $results;
+        return $properties;
     }
     
     /**
@@ -231,5 +311,20 @@ class PlantRetriever
         $proxy->setIdentifier($identifier);
 
         return $proxy;
+    }
+
+    /**
+     * Convert plant without properties to plant proxy
+     * @param $id
+     */
+    private function emptyPlantToProxy($id, $names, $images)
+    {
+        $proxy = new PlantProxy($id);
+        $proxy->set('identifier', $id);
+        $proxy->set('names', json_decode($names), true, 'lines');
+        $proxy->set('images', unserialize($images), true, 'images');
+
+        return $proxy;
+
     }
 }

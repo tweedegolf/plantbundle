@@ -251,7 +251,7 @@ class PlantRetriever
 
         $plants = $query->fetchAll();
 
-        if (count($plants) < 0) {
+        if (count($plants) === 0) {
             return null;
         }
 

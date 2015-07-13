@@ -27,4 +27,5 @@ services:
             - %tweedegolf_plant.elastica_port%
             - %tweedegolf_plant.elastica_host%
             - %plant_properties%
+            - %plant_index%
             - %languages%

@@ -5,7 +5,9 @@ namespace TweedeGolf\PlantBundle\Index;
 use Symfony\Component\Console\Output\OutputInterface;
 use \Elastica\Client;
 use \Elastica\Document;
+use \Elastica\Index;
 use TweedeGolf\PlantBundle\Retriever\PlantRetriever;
+
 /**
  * Service containing one public method to refresh the plant index. Mainly defined to be called from the ElasticaCommand
  * command and to allow refreshing the index when testing in the tekenjetuin project
@@ -66,15 +68,18 @@ class IndexRefresher
         $plantIndex,
         $languages
     ) {
-        $this->plantRetriever = $retriever; //tweedegolf_plant.plant_retriever
-        $this->elasticaPort = $elasticaPort; //tweedegolf_plant.elastica_port
-        $this->elasticaHost = $elasticaHost; //tweedegolf_plant.elastica_host
-        $this->propertyTranslations = $propertyTranslations; //plant_properties
+        $this->plantRetriever = $retriever;
+        $this->elasticaPort = $elasticaPort;
+        $this->elasticaHost = $elasticaHost;
+        $this->propertyTranslations = $propertyTranslations;
         $this->plantIndex = $plantIndex;
         $this->languages = $languages;
     }
 
     /**
+     * The refresh method. Accepts an option OutputInterface and $progress variable for usage from within
+     * a command such as the ElasticaRefresh command
+     *
      * @param OutputInterface $output
      * @param null $progress
      */

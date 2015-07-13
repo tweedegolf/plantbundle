@@ -20,16 +20,23 @@ use FOS\ElasticaBundle\Paginator\TransformedPaginatorAdapter;
 class PlantFinder
 {
     /**
+     * @var Name of the plant search index
+     */
+    private $index;
+
+    /**
      * @param PlantTransformer $transformer
      * @param $host
      * @param $port
+     * @param $plantIndex
      */
-    public function __construct(PlantTransformer $transformer, $host, $port)
+    public function __construct(PlantTransformer $transformer, $host, $port, $plantIndex)
     {
         $this->client = new Client(['host' => $host, 'port' => $port]);
         $this->search = new Search($this->client);
         $this->transformer = $transformer;
-        $this->searchable = $this->client->getIndex('plant');
+        $this->index = $plantIndex;
+        $this->searchable = $this->client->getIndex($this->index);
     }
 
     /**
@@ -43,7 +50,7 @@ class PlantFinder
         $options = null
     )
     {
-        $this->search->addIndex('plant');
+        $this->search->addIndex($this->index);
         $this->search->addType('plant');
 
         /* Locale */

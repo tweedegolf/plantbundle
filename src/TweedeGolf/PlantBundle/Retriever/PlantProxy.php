@@ -20,6 +20,11 @@ class PlantProxy {
     private $id;
 
     /**
+     * @var string
+     */
+    private $identifier;
+
+    /**
      * @var array Array with key values pairs "property name" => "property value"
      */
     private $values = [];
@@ -100,9 +105,28 @@ class PlantProxy {
         return $this->id;
     }
 
+    /**
+     * @param $id string
+     */
     public function setId($id)
     {
         $this->id = $id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIdentifier()
+    {
+        return $this->identifier;
+    }
+
+    /**
+     * @param $id string
+     */
+    public function setIdentifier($identifier)
+    {
+        $this->identifier = $identifier;
     }
 
     /**

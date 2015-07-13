@@ -20,3 +20,11 @@ services:
         class: TweedeGolf\PlantBundle\Retriever\PropertyRetriever
         arguments:
             - @doctrine.dbal.tweedegolf_plant_connection
+    tweedegolf_plant.index_refresher:
+        class: TweedeGolf\PlantBundle\Index\IndexRefresher
+        arguments:
+            - @tweedegolf_plant.plant_retriever
+            - %tweedegolf_plant.elastica_port%
+            - %tweedegolf_plant.elastica_host%
+            - %plant_properties%
+            - %languages%
